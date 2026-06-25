@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+import '../util/supabase_config.dart';
 
 class AuthProvider extends ChangeNotifier {
-  final SupabaseClient _supabase = Supabase.instance.client;
-  
   Map<String, dynamic>? _currentUser;
 
   bool get estaAutenticado => _currentUser != null;
@@ -21,14 +21,24 @@ class AuthProvider extends ChangeNotifier {
     return userEmail.split('@')[0];
   }
 
+  Map<String, String> get _headers => {
+        'apikey': SupabaseConfig.anonKey,
+        'Authorization': 'Bearer ${SupabaseConfig.anonKey}',
+        'Content-Type': 'application/json',
+        'Prefer': 'return=representation'
+      };
+
   Future<void> login(String email, String password) async {
-    print('AuthProvider: Iniciando login para \$email na tabela perfis');
-    
-    final data = await _supabase
-        .from('perfis')
-        .select()
-        .eq('email', email)
-        .limit(1);
+    final response = await http.get(
+      Uri.parse('${SupabaseConfig.url}/rest/v1/perfis?email=eq.$email'),
+      headers: _headers,
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception('Erro ao conectar ao banco');
+    }
+
+    final List<dynamic> data = jsonDecode(response.body);
     
     if (data.isEmpty) {
       throw Exception('Invalid login credentials');
@@ -41,24 +51,38 @@ class AuthProvider extends ChangeNotifier {
     }
     
     _currentUser = userRow;
-    print('AuthProvider: Login concluído. Usuário: \$_currentUser');
     notifyListeners();
   }
 
   Future<void> cadastra(String email, String password, {String? nome}) async {
-    final existing = await _supabase.from('perfis').select().eq('email', email).limit(1);
+    final checkResponse = await http.get(
+      Uri.parse('${SupabaseConfig.url}/rest/v1/perfis?email=eq.$email'),
+      headers: _headers,
+    );
+
+    final List<dynamic> existing = jsonDecode(checkResponse.body);
     if (existing.isNotEmpty) {
       throw Exception('User already exists');
     }
     
-    final inserted = await _supabase.from('perfis').insert({
-      'email': email,
-      'senha_hash': password,
-      'nome': nome ?? email.split('@')[0],
-    }).select().single();
-    
-    _currentUser = inserted;
-    notifyListeners();
+    final response = await http.post(
+      Uri.parse('${SupabaseConfig.url}/rest/v1/perfis'),
+      headers: _headers,
+      body: jsonEncode({
+        'email': email,
+        'senha_hash': password,
+      }),
+    );
+
+    if (response.statusCode >= 200 && response.statusCode < 300) {
+      final List<dynamic> inserted = jsonDecode(response.body);
+      if (inserted.isNotEmpty) {
+        _currentUser = inserted[0];
+        notifyListeners();
+      }
+    } else {
+      throw Exception('Erro ao cadastrar');
+    }
   }
 
   void logout() {

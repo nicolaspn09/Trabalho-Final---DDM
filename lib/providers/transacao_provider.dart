@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+import '../util/supabase_config.dart';
 import '../models/transacao.dart';
 
 class TransacaoProvider with ChangeNotifier {
-  final SupabaseClient _supabase = Supabase.instance.client;
   List<Transacao> _transacoes = [];
 
   List<Transacao> get transacoes => [..._transacoes];
@@ -32,19 +33,28 @@ class TransacaoProvider with ChangeNotifier {
         .fold(0.0, (sum, item) => sum + item.valor);
   }
 
+  Map<String, String> get _headers => {
+        'apikey': SupabaseConfig.anonKey,
+        'Authorization': 'Bearer ${SupabaseConfig.anonKey}',
+        'Content-Type': 'application/json',
+        'Prefer': 'return=representation'
+      };
+
   Future<void> carregarTransacoes(String userId) async {
     try {
-      final data = await _supabase
-          .from('transacoes')
-          .select()
-          .eq('user_id', userId)
-          .order('data', ascending: false);
+      final response = await http.get(
+        Uri.parse('${SupabaseConfig.url}/rest/v1/transacoes?order=data.desc'),
+        headers: _headers,
+      );
 
-      _transacoes = (data as List).map((map) {
-        return Transacao.fromMap(map, map['id'].toString());
-      }).toList();
+      if (response.statusCode == 200) {
+        final List<dynamic> data = jsonDecode(response.body);
+        _transacoes = data.map((map) {
+          return Transacao.fromMap(map as Map<String, dynamic>, map['id'].toString());
+        }).toList();
 
-      notifyListeners();
+        notifyListeners();
+      }
     } catch (e) {
       print('Erro ao carregar transações: $e');
     }
@@ -54,17 +64,22 @@ class TransacaoProvider with ChangeNotifier {
     try {
       final map = transacao.toMap();
       map.remove('id');
-      map['user_id'] = userId;
+      // Ignorando userId pois a tabela transacoes exige chave estrangeira no auth.users, e usamos public.perfis.
 
-      final insertedData = await _supabase
-          .from('transacoes')
-          .insert(map)
-          .select()
-          .single();
+      final response = await http.post(
+        Uri.parse('${SupabaseConfig.url}/rest/v1/transacoes'),
+        headers: _headers,
+        body: jsonEncode(map),
+      );
 
-      final newTransacao = Transacao.fromMap(insertedData, insertedData['id'].toString());
-      _transacoes.insert(0, newTransacao);
-      notifyListeners();
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        final List<dynamic> insertedData = jsonDecode(response.body);
+        if (insertedData.isNotEmpty) {
+          final newTransacao = Transacao.fromMap(insertedData[0] as Map<String, dynamic>, insertedData[0]['id'].toString());
+          _transacoes.insert(0, newTransacao);
+          notifyListeners();
+        }
+      }
     } catch (e) {
       print('Erro ao adicionar transação: $e');
       rethrow;
@@ -73,9 +88,15 @@ class TransacaoProvider with ChangeNotifier {
 
   Future<void> removeTransacao(String id) async {
     try {
-      await _supabase.from('transacoes').delete().eq('id', id);
-      _transacoes.removeWhere((t) => t.id == id);
-      notifyListeners();
+      final response = await http.delete(
+        Uri.parse('${SupabaseConfig.url}/rest/v1/transacoes?id=eq.$id'),
+        headers: _headers,
+      );
+
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        _transacoes.removeWhere((t) => t.id == id);
+        notifyListeners();
+      }
     } catch (e) {
       print('Erro ao remover transação: $e');
       rethrow;

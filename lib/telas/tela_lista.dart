@@ -20,7 +20,9 @@ class _TelaListaState extends State<TelaLista> {
   @override
   void initState() {
     super.initState();
-    _buscarDados();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _buscarDados();
+    });
   }
 
   Future<void> _buscarDados() async {

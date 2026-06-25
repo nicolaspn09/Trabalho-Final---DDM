@@ -5,6 +5,8 @@ class Transacao {
   final String tipo; // 'receita' ou 'despesa'
   final String data;
   final String categoria;
+  final String? icone; // E.g., '🍔', '🚗', '💰'
+  final String? banco; // E.g., 'Nubank Crédito **** 2059'
 
   Transacao({
     this.id,
@@ -13,6 +15,8 @@ class Transacao {
     required this.tipo,
     required this.data,
     required this.categoria,
+    this.icone,
+    this.banco,
   });
 
   Map<String, dynamic> toMap() {
@@ -23,6 +27,8 @@ class Transacao {
       'tipo': tipo,
       'data': data,
       'categoria': categoria,
+      if (icone != null) 'icone': icone,
+      if (banco != null) 'banco': banco,
     };
   }
 
@@ -34,11 +40,13 @@ class Transacao {
       tipo: map['tipo'] as String,
       data: map['data'] as String,
       categoria: map['categoria'] as String,
+      icone: map['icone'] as String?,
+      banco: map['banco'] as String?,
     );
   }
 
   @override
   String toString() {
-    return 'Transacao{id: $id, titulo: $titulo, valor: $valor, tipo: $tipo, data: $data}';
+    return 'Transacao{id: $id, titulo: $titulo, valor: $valor, tipo: $tipo, data: $data, icone: $icone, banco: $banco}';
   }
 }

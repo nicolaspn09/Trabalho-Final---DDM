@@ -17,17 +17,18 @@ class BotaoLogin extends StatelessWidget {
       style: ElevatedButton.styleFrom(
         padding: const EdgeInsets.symmetric(
           horizontal: 30,
-          vertical: 10,
+          vertical: 12,
         ),
-        backgroundColor: Colors.teal,
+        backgroundColor: const Color(0xFF38BDF8),
         foregroundColor: Colors.white,
+        elevation: 2,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(24),
         ),
       ),
       child: Text(
         texto,
-        style: const TextStyle(fontWeight: FontWeight.bold),
+        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
       ),
     );
   }

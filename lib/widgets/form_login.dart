@@ -13,18 +13,25 @@ class FormLogin extends StatefulWidget {
 }
 
 class _FormLoginState extends State<FormLogin> {
+  final _nomeController = TextEditingController();
+  final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+
+  
   final _formKey = GlobalKey<FormState>();
   bool _isLoading = false;
   Modo _modo = Modo.login;
-  
-  final Map<String, String> _dadosForm = {
-    'email': '',
-    'password': '',
-  };
 
   bool _ehLogin() => _modo == Modo.login;
   bool _ehCadastro() => _modo == Modo.cadastro;
+
+  @override
+  void dispose() {
+    _nomeController.dispose();
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
 
   void _trocaModoTela() {
     setState(() {
@@ -42,37 +49,34 @@ class _FormLoginState extends State<FormLogin> {
     if (!valido) return;
 
     setState(() => _isLoading = true);
-    _formKey.currentState?.save();
 
     AuthProvider authProvider = Provider.of<AuthProvider>(context, listen: false);
 
     try {
       if (_ehLogin()) {
         await authProvider.login(
-          _dadosForm['email']!,
-          _dadosForm['password']!,
+          _emailController.text.trim(),
+          _passwordController.text,
         );
       } else {
         await authProvider.cadastra(
-          _dadosForm['email']!,
-          _dadosForm['password']!,
+          _emailController.text.trim(),
+          _passwordController.text,
+          nome: _nomeController.text.trim(),
         );
       }
     } catch (error) {
       String mensagemErro = 'Erro na autenticação.';
       final errStr = error.toString();
-      if (errStr.contains('EMAIL_EXISTS')) {
+      
+      if (errStr.contains('User already exists')) {
         mensagemErro = 'Este e-mail já está cadastrado.';
-      } else if (errStr.contains('EMAIL_NOT_FOUND') || errStr.contains('INVALID_LOGIN_CREDENTIALS')) {
+      } else if (errStr.contains('Invalid login credentials')) {
         mensagemErro = 'E-mail ou senha incorretos.';
-      } else if (errStr.contains('INVALID_PASSWORD')) {
-        mensagemErro = 'Senha incorreta.';
-      } else if (errStr.contains('INVALID_EMAIL')) {
-        mensagemErro = 'E-mail inválido.';
-      } else if (errStr.contains('WEAK_PASSWORD')) {
-        mensagemErro = 'A senha é muito fraca.';
+      } else if (errStr.contains('Password should be')) {
+        mensagemErro = 'A senha deve conter no mínimo 6 caracteres.';
       } else {
-        mensagemErro = errStr.replaceAll('Exception: ', '');
+        mensagemErro = errStr.replaceAll('AuthException: ', '').replaceAll('Exception: ', '');
       }
 
       if (!mounted) return;
@@ -92,25 +96,57 @@ class _FormLoginState extends State<FormLogin> {
   @override
   Widget build(BuildContext context) {
     return Card(
+      color: const Color(0xFF1E293B), // Card escuro
       margin: const EdgeInsets.symmetric(horizontal: 20),
       elevation: 8,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(16),
       ),
       child: Container(
-        padding: const EdgeInsets.all(14),
-        height: _ehLogin() ? 320 : 410,
+        padding: const EdgeInsets.all(18),
+        height: _ehLogin() ? 320 : 420,
         child: Form(
           key: _formKey,
           child: Column(
             children: [
+              if (_ehCadastro())
+                TextFormField(
+                  controller: _nomeController,
+                  style: const TextStyle(color: Colors.white),
+                  decoration: const InputDecoration(
+                    labelText: 'Nome Completo',
+                    labelStyle: TextStyle(color: Colors.grey),
+                    enabledBorder: UnderlineInputBorder(
+                      borderSide: BorderSide(color: Colors.grey),
+                    ),
+                    focusedBorder: UnderlineInputBorder(
+                      borderSide: BorderSide(color: Color(0xFF38BDF8)),
+                    ),
+                    icon: Icon(Icons.person_outline, color: Color(0xFF38BDF8)),
+                  ),
+                  validator: (nomeVal) {
+                    final nome = nomeVal ?? '';
+                    if (nome.trim().isEmpty) {
+                      return 'Informe seu nome.';
+                    }
+                    return null;
+                  },
+                ),
               TextFormField(
+                controller: _emailController,
+                style: const TextStyle(color: Colors.white),
                 decoration: const InputDecoration(
                   labelText: 'E-mail (login)',
-                  icon: Icon(Icons.email_outlined, color: Colors.teal),
+                  labelStyle: TextStyle(color: Colors.grey),
+                  enabledBorder: UnderlineInputBorder(
+                    borderSide: BorderSide(color: Colors.grey),
+                  ),
+                  focusedBorder: UnderlineInputBorder(
+                    borderSide: BorderSide(color: Color(0xFF38BDF8)),
+                  ),
+                  icon: Icon(Icons.email_outlined, color: Color(0xFF38BDF8)),
                 ),
                 keyboardType: TextInputType.emailAddress,
-                onSaved: (email) => _dadosForm['email'] = email ?? '',
                 validator: (emailVal) {
                   final email = emailVal ?? '';
                   if (!email.contains('@')) {
@@ -120,13 +156,20 @@ class _FormLoginState extends State<FormLogin> {
                 },
               ),
               TextFormField(
+                controller: _passwordController,
+                style: const TextStyle(color: Colors.white),
                 decoration: const InputDecoration(
                   labelText: 'Senha',
-                  icon: Icon(Icons.lock_outline, color: Colors.teal),
+                  labelStyle: TextStyle(color: Colors.grey),
+                  enabledBorder: UnderlineInputBorder(
+                    borderSide: BorderSide(color: Colors.grey),
+                  ),
+                  focusedBorder: UnderlineInputBorder(
+                    borderSide: BorderSide(color: Color(0xFF38BDF8)),
+                  ),
+                  icon: Icon(Icons.lock_outline, color: Color(0xFF38BDF8)),
                 ),
                 obscureText: true,
-                controller: _passwordController,
-                onSaved: (password) => _dadosForm['password'] = password ?? '',
                 validator: (passwordVal) {
                   final password = passwordVal ?? '';
                   if (password.isEmpty || password.length < 6) {
@@ -137,9 +180,17 @@ class _FormLoginState extends State<FormLogin> {
               ),
               if (_ehCadastro())
                 TextFormField(
+                  style: const TextStyle(color: Colors.white),
                   decoration: const InputDecoration(
                     labelText: 'Confirmar Senha',
-                    icon: Icon(Icons.lock_reset, color: Colors.teal),
+                    labelStyle: TextStyle(color: Colors.grey),
+                    enabledBorder: UnderlineInputBorder(
+                      borderSide: BorderSide(color: Colors.grey),
+                    ),
+                    focusedBorder: UnderlineInputBorder(
+                      borderSide: BorderSide(color: Color(0xFF38BDF8)),
+                    ),
+                    icon: Icon(Icons.lock_reset, color: Color(0xFF38BDF8)),
                   ),
                   obscureText: true,
                   validator: _ehLogin()
@@ -154,16 +205,19 @@ class _FormLoginState extends State<FormLogin> {
                 ),
               const SizedBox(height: 20),
               if (_isLoading)
-                const CircularProgressIndicator()
+                const CircularProgressIndicator(color: Color(0xFF38BDF8))
               else
                 BotaoLogin(
                   texto: _ehLogin() ? 'Entrar' : 'Registrar Conta',
                   onPressed: _submit,
                 ),
               const Spacer(),
-              BotaoLogin(
-                texto: _ehLogin() ? 'Criar novo cadastro?' : 'Já tem conta? Fazer Login', 
+              TextButton(
                 onPressed: _trocaModoTela,
+                child: Text(
+                  _ehLogin() ? 'Criar novo cadastro?' : 'Já tem conta? Fazer Login',
+                  style: const TextStyle(color: Color(0xFF38BDF8), fontWeight: FontWeight.w500),
+                ),
               ),
             ],
           ),

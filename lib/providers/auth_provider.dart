@@ -69,6 +69,7 @@ class AuthProvider extends ChangeNotifier {
       Uri.parse('${SupabaseConfig.url}/rest/v1/perfis'),
       headers: _headers,
       body: jsonEncode({
+        'nome': nome ?? email.split('@')[0],
         'email': email,
         'senha_hash': password,
       }),

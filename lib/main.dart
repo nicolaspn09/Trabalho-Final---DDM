@@ -4,6 +4,8 @@ import '../providers/transacao_provider.dart';
 import '../util/rotas.dart';
 import '../telas/tela_form.dart';
 import '../telas/tela_detalhes.dart';
+import '../telas/tela_dashboard.dart';
+import '../telas/tela_alertas.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 void main() {
@@ -31,6 +33,8 @@ class MyApp extends StatelessWidget {
           Rotas.telaInicial: (context) => const TelaInicial(),
           Rotas.telaDetalhes: (context) => const TelaDetalhes(titulo: "Detalhes da Transação"),
           Rotas.telaForm: (context) => const TelaForm(titulo: 'Nova Transação'),
+          Rotas.telaDashboard: (context) => const TelaDashboard(),
+          Rotas.telaAlertas: (context) => const TelaAlertas(),
         },
       ),
     );

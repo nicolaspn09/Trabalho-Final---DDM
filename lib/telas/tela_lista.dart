@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:geocoding/geocoding.dart';
 import '../providers/auth_provider.dart';
 import '../providers/transacao_provider.dart';
 import '../models/transacao.dart';
@@ -16,20 +18,63 @@ class TelaLista extends StatefulWidget {
 
 class _TelaListaState extends State<TelaLista> {
   bool _estaCarregando = false;
+  String _localizacaoAtual = 'Buscando localização...';
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _buscarDados();
+      _buscarLocalizacao();
     });
+  }
+
+  Future<void> _buscarLocalizacao() async {
+    try {
+      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
+        setState(() => _localizacaoAtual = 'GPS Desativado');
+        return;
+      }
+
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+        if (permission == LocationPermission.denied) {
+          setState(() => _localizacaoAtual = 'Permissão de GPS Negada');
+          return;
+        }
+      }
+
+      if (permission == LocationPermission.deniedForever) {
+        setState(() => _localizacaoAtual = 'Permissão Negada Permanentemente');
+        return;
+      }
+
+      Position position = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.low);
+      List<Placemark> placemarks = await placemarkFromCoordinates(position.latitude, position.longitude);
+      
+      if (placemarks.isNotEmpty) {
+        Placemark place = placemarks[0];
+        // subAdministrativeArea usually holds the city name, or locality
+        final city = place.subAdministrativeArea?.isNotEmpty == true ? place.subAdministrativeArea : place.locality;
+        setState(() {
+          _localizacaoAtual = '${city ?? "Desconhecido"}, ${place.administrativeArea ?? ""}';
+        });
+      } else {
+        setState(() => _localizacaoAtual = 'Local não encontrado');
+      }
+    } catch (e) {
+      setState(() => _localizacaoAtual = 'Não foi possível rastrear');
+      print('Erro de GPS: $e');
+    }
   }
 
   Future<void> _buscarDados() async {
     setState(() => _estaCarregando = true);
     final userId = Provider.of<AuthProvider>(context, listen: false).userId;
     if (userId != null) {
-      await Provider.of<TransacaoProvider>(context, listen: false).carregarTransacoes(userId);
+      await Provider.of<TransacaoProvider>(context, listen: false).carregarDadosCompletos(userId);
     }
     if (mounted) {
       setState(() => _estaCarregando = false);
@@ -153,23 +198,34 @@ class _TelaListaState extends State<TelaLista> {
                           ),
                         ),
                         const SizedBox(width: 12),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              'Boa tarde,',
-                              style: TextStyle(color: Colors.grey, fontSize: 13),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  'Boa tarde,',
+                                  style: TextStyle(color: Colors.grey, fontSize: 13),
+                                ),
+                                Text(
+                                  authProvider.nomeUsuario,
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                const SizedBox(height: 2),
+                                Row(
+                                  children: [
+                                    const Icon(Icons.location_on, color: Color(0xFF38BDF8), size: 12),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      _localizacaoAtual,
+                                      style: const TextStyle(color: Colors.grey, fontSize: 12),
+                                    ),
+                                  ],
+                                ),
+                              ],
                             ),
-                            Text(
-                              authProvider.nomeUsuario,
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
-                        ),
                       ],
                     ),
                     IconButton(
@@ -354,6 +410,32 @@ class _TelaListaState extends State<TelaLista> {
         foregroundColor: Colors.white,
         shape: const CircleBorder(),
         child: const Icon(Icons.add, size: 28),
+      ),
+      bottomNavigationBar: BottomNavigationBar(
+        backgroundColor: const Color(0xFF1E293B),
+        selectedItemColor: const Color(0xFF38BDF8),
+        unselectedItemColor: Colors.grey,
+        currentIndex: 0, // Home ativo
+        onTap: (index) {
+          if (index == 1) {
+            Navigator.pushReplacementNamed(context, Rotas.telaDashboard);
+          } else if (index == 2) {
+            Navigator.pushReplacementNamed(context, Rotas.telaAlertas);
+          }
+        },
+        items: [
+          const BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
+          const BottomNavigationBarItem(icon: Icon(Icons.bar_chart), label: 'Dashboard'),
+          BottomNavigationBarItem(
+            icon: transacaoProvider.alertasNaoLidos == 0 
+                ? const Icon(Icons.notifications) 
+                : Badge(
+                    label: Text('${transacaoProvider.alertasNaoLidos}'),
+                    child: const Icon(Icons.notifications),
+                  ),
+            label: 'Alertas',
+          ),
+        ],
       ),
     );
   }

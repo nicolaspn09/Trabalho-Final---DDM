@@ -16,8 +16,18 @@ class TelaForm extends StatefulWidget {
 class _TelaFormState extends State<TelaForm> {
   final _tituloController = TextEditingController();
   final _valorController = TextEditingController();
-  final _categoriaController = TextEditingController();
   String _tipo = 'despesa';
+  String _categoria = 'Outros';
+
+  final List<String> _categorias = [
+    'Casa',
+    'Alimentação',
+    'Transporte',
+    'Saúde',
+    'Educação',
+    'Lazer',
+    'Outros'
+  ];
 
   void _salva() {
     if (_tituloController.text.isEmpty || _valorController.text.isEmpty) {
@@ -30,7 +40,7 @@ class _TelaFormState extends State<TelaForm> {
       titulo: _tituloController.text,
       valor: valor,
       tipo: _tipo,
-      categoria: _categoriaController.text.isEmpty ? 'Outros' : _categoriaController.text,
+      categoria: _categoria,
       data: DateTime.now().toIso8601String(),
     );
 
@@ -44,116 +54,204 @@ class _TelaFormState extends State<TelaForm> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0B121F), // Fundo principal escuro
+      backgroundColor: const Color(0xFF000000), // Fundo preto puro Nubank Dark
       appBar: AppBar(
         title: Text(widget.titulo, style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
-        backgroundColor: const Color(0xFF1E293B),
+        backgroundColor: const Color(0xFF000000),
         iconTheme: const IconThemeData(color: Colors.white),
+        elevation: 0,
       ),
-      body: Center(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.start,
-            children: [
-              const Text(
-                "Dados da Transação",
-                style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white) 
-              ),
-              const SizedBox(height: 20),
-              TextField(
-                style: const TextStyle(color: Colors.white, fontSize: 18),
-                controller: _tituloController,
-                decoration: InputDecoration(
-                  labelText: "Título ou Descrição",
-                  labelStyle: const TextStyle(color: Colors.grey),
-                  filled: true,
-                  fillColor: const Color(0xFF1E293B), // Fundo do input
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(16),
-                    borderSide: BorderSide.none,
+      body: Column(
+        children: [
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    "Qual é o valor?",
+                    style: TextStyle(fontSize: 16, color: Colors.grey),
                   ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(16),
-                    borderSide: const BorderSide(color: Color(0xFF38BDF8)),
+                  const SizedBox(height: 8),
+                  TextField(
+                    style: const TextStyle(color: Colors.white, fontSize: 36, fontWeight: FontWeight.bold),
+                    controller: _valorController,
+                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    decoration: InputDecoration(
+                      prefixText: "R\$ ",
+                      prefixStyle: const TextStyle(color: Colors.white, fontSize: 36, fontWeight: FontWeight.bold),
+                      hintText: "0,00",
+                      hintStyle: TextStyle(color: Colors.white.withOpacity(0.3), fontSize: 36, fontWeight: FontWeight.bold),
+                      border: InputBorder.none,
+                    ),
                   ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                style: const TextStyle(color: Colors.white, fontSize: 18),
-                controller: _valorController,
-                keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                decoration: InputDecoration(
-                  labelText: "Valor (R\$)",
-                  labelStyle: const TextStyle(color: Colors.grey),
-                  filled: true,
-                  fillColor: const Color(0xFF1E293B),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(16),
-                    borderSide: BorderSide.none,
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(16),
-                    borderSide: const BorderSide(color: Color(0xFF38BDF8)),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                style: const TextStyle(color: Colors.white, fontSize: 18),
-                controller: _categoriaController,
-                decoration: InputDecoration(
-                  labelText: "Categoria (Ex: Food, Fuel, Saúde)",
-                  labelStyle: const TextStyle(color: Colors.grey),
-                  filled: true,
-                  fillColor: const Color(0xFF1E293B),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(16),
-                    borderSide: BorderSide.none,
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(16),
-                    borderSide: const BorderSide(color: Color(0xFF38BDF8)),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF1E293B),
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: DropdownButtonHideUnderline(
-                  child: DropdownButton<String>(
-                    value: _tipo,
-                    isExpanded: true,
-                    dropdownColor: const Color(0xFF1E293B),
-                    style: const TextStyle(fontSize: 18, color: Colors.white),
-                    icon: const Icon(Icons.arrow_drop_down, color: Color(0xFF38BDF8)),
-                    items: const [
-                      DropdownMenuItem(value: 'despesa', child: Text('Despesa (Saída)')),
-                      DropdownMenuItem(value: 'receita', child: Text('Receita (Entrada)')),
+                  const SizedBox(height: 32),
+                  
+                  // Tipo Selector
+                  Row(
+                    children: [
+                      Expanded(
+                        child: GestureDetector(
+                          onTap: () => setState(() => _tipo = 'despesa'),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            decoration: BoxDecoration(
+                              color: _tipo == 'despesa'
+                                  ? const Color(0xFF171717)
+                                  : Colors.transparent,
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(
+                                color: _tipo == 'despesa'
+                                    ? const Color(0xFFEF4444)
+                                    : const Color(0xFF171717),
+                                width: 2,
+                              ),
+                            ),
+                            child: Center(
+                              child: Text(
+                                'Despesa',
+                                style: TextStyle(
+                                  color: _tipo == 'despesa'
+                                      ? const Color(0xFFEF4444)
+                                      : Colors.grey,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: GestureDetector(
+                          onTap: () => setState(() => _tipo = 'receita'),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            decoration: BoxDecoration(
+                              color: _tipo == 'receita'
+                                  ? const Color(0xFF171717)
+                                  : Colors.transparent,
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(
+                                color: _tipo == 'receita'
+                                    ? const Color(0xFF10B981)
+                                    : const Color(0xFF171717),
+                                width: 2,
+                              ),
+                            ),
+                            child: Center(
+                              child: Text(
+                                'Receita',
+                                style: TextStyle(
+                                  color: _tipo == 'receita'
+                                      ? const Color(0xFF10B981)
+                                      : Colors.grey,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
                     ],
-                    onChanged: (val) {
-                      if (val != null) {
-                        setState(() => _tipo = val);
+                  ),
+                  const SizedBox(height: 32),
+
+                  const Text("Descrição", style: TextStyle(color: Colors.grey, fontSize: 14)),
+                  const SizedBox(height: 8),
+                  TextField(
+                    style: const TextStyle(color: Colors.white, fontSize: 16),
+                    controller: _tituloController,
+                    decoration: InputDecoration(
+                      filled: true,
+                      fillColor: const Color(0xFF171717),
+                      hintText: "Ex: Compras no mercado",
+                      hintStyle: const TextStyle(color: Colors.grey),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide.none,
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: Color(0xFFF97316), width: 1.5), // Borda verde-limão ao focar
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+
+                  const Text("Categoria", style: TextStyle(color: Colors.grey, fontSize: 14)),
+                  const SizedBox(height: 8),
+                  DropdownButtonFormField<String>(
+                    value: _categoria,
+                    dropdownColor: const Color(0xFF171717),
+                    style: const TextStyle(color: Colors.white, fontSize: 16),
+                    decoration: InputDecoration(
+                      filled: true,
+                      fillColor: const Color(0xFF171717),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide.none,
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: Color(0xFFF97316), width: 1.5),
+                      ),
+                    ),
+                    items: _categorias.map((String categoria) {
+                      return DropdownMenuItem<String>(
+                        value: categoria,
+                        child: Text(categoria),
+                      );
+                    }).toList(),
+                    onChanged: (String? novaCategoria) {
+                      if (novaCategoria != null) {
+                        setState(() {
+                          _categoria = novaCategoria;
+                        });
                       }
                     },
                   ),
+                ],
+              ),
+            ),
+          ),
+          
+          // Botão inferior fixo
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(24),
+            decoration: const BoxDecoration(
+              color: Color(0xFF000000),
+            ),
+            child: ElevatedButton(
+              onPressed: _salva,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFF97316), // Verde-limão
+                foregroundColor: Colors.black, // Texto preto
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                elevation: 0,
+              ),
+              child: const Text(
+                'SALVAR',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 1.2,
                 ),
               ),
-            ],
+            ),
           ),
-        ),
-      ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: _salva,
-        backgroundColor: const Color(0xFF38BDF8),
-        icon: const Icon(Icons.save, color: Colors.white),
-        label: const Text('Salvar Transação', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        ],
       ),
     );
   }
 }
+

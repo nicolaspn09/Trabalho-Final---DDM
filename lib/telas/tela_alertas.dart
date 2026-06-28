@@ -36,11 +36,12 @@ class _TelaAlertasState extends State<TelaAlertas> {
     final provider = Provider.of<TransacaoProvider>(context);
 
     return Scaffold(
-      backgroundColor: const Color(0xFF0B121F),
+      backgroundColor: const Color(0xFF000000),
       appBar: AppBar(
         title: const Text('Central de Alertas', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-        backgroundColor: const Color(0xFF1E293B),
+        backgroundColor: const Color(0xFF000000),
         iconTheme: const IconThemeData(color: Colors.white),
+        elevation: 0,
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -58,7 +59,7 @@ class _TelaAlertasState extends State<TelaAlertas> {
                   width: double.infinity,
                   padding: const EdgeInsets.all(24),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF1E293B),
+                    color: const Color(0xFF171717),
                     borderRadius: BorderRadius.circular(16),
                   ),
                   child: const Text(
@@ -72,38 +73,54 @@ class _TelaAlertasState extends State<TelaAlertas> {
                   final idx = entry.key;
                   final alerta = entry.value;
                   final isReceita = alerta['tipo'] == 'receita';
+                  final neonColor = isReceita ? const Color(0xFF10B981) : const Color(0xFFEF4444);
                   return Container(
-                    margin: const EdgeInsets.only(bottom: 8),
-                    padding: const EdgeInsets.all(12),
+                    margin: const EdgeInsets.only(bottom: 12),
+                    padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF1E293B),
-                      borderRadius: BorderRadius.circular(10),
+                      color: const Color(0xFF171717),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: neonColor.withOpacity(0.2), width: 1.5),
+                      boxShadow: [
+                        BoxShadow(
+                          color: neonColor.withOpacity(0.08),
+                          blurRadius: 12,
+                          offset: const Offset(0, 4),
+                        )
+                      ]
                     ),
                     child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                      crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
                         Container(
-                          margin: const EdgeInsets.only(top: 4, right: 10),
-                          width: 8,
-                          height: 8,
+                          padding: const EdgeInsets.all(8),
                           decoration: BoxDecoration(
-                            color: isReceita ? const Color(0xFF10B981) : const Color(0xFFEF4444),
+                            color: neonColor.withOpacity(0.15),
                             shape: BoxShape.circle,
                           ),
+                          child: Icon(isReceita ? Icons.arrow_upward : Icons.warning_amber_rounded, color: neonColor, size: 20),
                         ),
+                        const SizedBox(width: 16),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(alerta['titulo'], style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14)),
-                              const SizedBox(height: 2),
+                              Text(alerta['titulo'], style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15)),
+                              const SizedBox(height: 4),
                               Text(alerta['time'], style: const TextStyle(color: Colors.grey, fontSize: 12)),
                             ],
                           ),
                         ),
                         GestureDetector(
                           onTap: () => provider.removerAlerta(idx),
-                          child: const Icon(Icons.close, color: Colors.grey, size: 20),
+                          child: Container(
+                            padding: const EdgeInsets.all(4),
+                            decoration: BoxDecoration(
+                              color: Colors.black26,
+                              borderRadius: BorderRadius.circular(8)
+                            ),
+                            child: const Icon(Icons.close, color: Colors.grey, size: 20),
+                          ),
                         ),
                       ],
                     ),
@@ -125,12 +142,12 @@ class _TelaAlertasState extends State<TelaAlertas> {
                       child: Container(
                         padding: const EdgeInsets.symmetric(vertical: 8),
                         decoration: BoxDecoration(
-                          color: _tipoLimite == 'despesa' ? const Color(0xFF38BDF8) : const Color(0xFF1E293B),
+                          color: _tipoLimite == 'despesa' ? const Color(0xFFF97316) : const Color(0xFF171717),
                           borderRadius: const BorderRadius.only(topLeft: Radius.circular(8), bottomLeft: Radius.circular(8)),
-                          border: Border.all(color: const Color(0xFF38BDF8)),
+                          border: Border.all(color: const Color(0xFFF97316)),
                         ),
                         alignment: Alignment.center,
-                        child: Text('Despesa', style: TextStyle(color: _tipoLimite == 'despesa' ? Colors.white : Colors.grey, fontWeight: FontWeight.bold)),
+                        child: Text('Despesa', style: TextStyle(color: _tipoLimite == 'despesa' ? Colors.black : Colors.grey, fontWeight: FontWeight.bold)),
                       ),
                     ),
                   ),
@@ -140,12 +157,12 @@ class _TelaAlertasState extends State<TelaAlertas> {
                       child: Container(
                         padding: const EdgeInsets.symmetric(vertical: 8),
                         decoration: BoxDecoration(
-                          color: _tipoLimite == 'receita' ? const Color(0xFF38BDF8) : const Color(0xFF1E293B),
+                          color: _tipoLimite == 'receita' ? const Color(0xFFF97316) : const Color(0xFF171717),
                           borderRadius: const BorderRadius.only(topRight: Radius.circular(8), bottomRight: Radius.circular(8)),
-                          border: Border.all(color: const Color(0xFF38BDF8)),
+                          border: Border.all(color: const Color(0xFFF97316)),
                         ),
                         alignment: Alignment.center,
-                        child: Text('Receita', style: TextStyle(color: _tipoLimite == 'receita' ? Colors.white : Colors.grey, fontWeight: FontWeight.bold)),
+                        child: Text('Receita', style: TextStyle(color: _tipoLimite == 'receita' ? Colors.black : Colors.grey, fontWeight: FontWeight.bold)),
                       ),
                     ),
                   ),
@@ -163,7 +180,7 @@ class _TelaAlertasState extends State<TelaAlertas> {
                         hintText: "Valor (R\$)",
                         hintStyle: const TextStyle(color: Colors.grey),
                         filled: true,
-                        fillColor: const Color(0xFF1E293B),
+                        fillColor: const Color(0xFF171717),
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none),
                       ),
                     ),
@@ -172,11 +189,11 @@ class _TelaAlertasState extends State<TelaAlertas> {
                   ElevatedButton(
                     onPressed: () => _adicionarLimite(provider),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF38BDF8),
+                      backgroundColor: const Color(0xFFF97316),
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                     ),
-                    child: const Text('Cadastrar', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                    child: const Text('Cadastrar', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
                   ),
                 ],
               ),
@@ -196,7 +213,7 @@ class _TelaAlertasState extends State<TelaAlertas> {
                     margin: const EdgeInsets.only(bottom: 8),
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF1E293B),
+                      color: const Color(0xFF171717),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Row(
@@ -217,32 +234,6 @@ class _TelaAlertasState extends State<TelaAlertas> {
             ],
           ),
         ),
-      ),
-      bottomNavigationBar: BottomNavigationBar(
-        backgroundColor: const Color(0xFF1E293B),
-        selectedItemColor: const Color(0xFF38BDF8),
-        unselectedItemColor: Colors.grey,
-        currentIndex: 2, // Alertas ativo
-        onTap: (index) {
-          if (index == 0) {
-            Navigator.pushReplacementNamed(context, Rotas.telaInicial);
-          } else if (index == 1) {
-            Navigator.pushReplacementNamed(context, Rotas.telaDashboard);
-          }
-        },
-        items: [
-          const BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-          const BottomNavigationBarItem(icon: Icon(Icons.bar_chart), label: 'Dashboard'),
-          BottomNavigationBarItem(
-            icon: provider.alertasNaoLidos == 0 
-                ? const Icon(Icons.notifications) 
-                : Badge(
-                    label: Text('${provider.alertasNaoLidos}'),
-                    child: const Icon(Icons.notifications),
-                  ),
-            label: 'Alertas',
-          ),
-        ],
       ),
     );
   }

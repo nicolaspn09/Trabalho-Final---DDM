@@ -259,4 +259,47 @@ class TransacaoProvider with ChangeNotifier {
       rethrow;
     }
   }
+
+  Future<void> editarTransacao({
+    required String id,
+    required String novoTitulo,
+    required String novaCategoria,
+    required double novoValor,
+  }) async {
+    try {
+      final response = await http.patch(
+        Uri.parse('${SupabaseConfig.url}/rest/v1/transacoes?id=eq.$id'),
+        headers: _headers,
+        body: jsonEncode({
+          'titulo': novoTitulo,
+          'categoria': novaCategoria,
+          'valor': novoValor,
+        }),
+      );
+
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        final index = _transacoes.indexWhere((t) => t.id == id);
+        if (index != -1) {
+          final oldTx = _transacoes[index];
+          _transacoes[index] = Transacao(
+            id: oldTx.id,
+            titulo: novoTitulo,
+            valor: novoValor,
+            categoria: novaCategoria,
+            tipo: oldTx.tipo,
+            data: oldTx.data,
+            icone: oldTx.icone,
+            banco: oldTx.banco,
+          );
+          notifyListeners();
+        }
+      } else {
+        print('Erro no patch: ${response.statusCode} - ${response.body}');
+        throw Exception('Erro ao atualizar transação');
+      }
+    } catch (e) {
+      print('Erro ao editar transação: $e');
+      rethrow;
+    }
+  }
 }

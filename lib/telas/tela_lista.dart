@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:ui';
 import 'package:provider/provider.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
@@ -161,282 +162,205 @@ class _TelaListaState extends State<TelaLista> {
 
   @override
   Widget build(BuildContext context) {
-    final authProvider = Provider.of<AuthProvider>(context);
     final transacaoProvider = Provider.of<TransacaoProvider>(context);
     final transacoes = transacaoProvider.transacoes;
-    final recentes = transacoes.take(4).toList();
+    final recentes = transacoes.take(15).toList(); // Vamos exibir um pouco mais de transações
 
     return Scaffold(
-      backgroundColor: const Color(0xFF0B121F), // Fundo escuro idêntico ao do mockup
+      backgroundColor: const Color(0xFF000000), // Fundo Preto Puro
       body: SafeArea(
-        child: RefreshIndicator(
-          onRefresh: _buscarDados,
-          color: const Color(0xFF38BDF8),
-          child: SingleChildScrollView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Cabeçalho de Boas-vindas
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SizedBox(height: 24),
+              // Header
+              const Text(
+                'Atividades',
+                style: TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 24),
+              
+              // Barra de Busca
+              Container(
+                height: 48,
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF171717),
+                  borderRadius: BorderRadius.circular(24),
+                ),
+                child: const Row(
                   children: [
-                    Row(
-                      children: [
-                        CircleAvatar(
-                          radius: 20,
-                          backgroundColor: const Color(0xFF1E293B),
-                          child: Text(
-                            authProvider.nomeUsuario.isNotEmpty
-                                ? authProvider.nomeUsuario[0].toUpperCase()
-                                : 'U',
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Text(
-                                  'Boa tarde,',
-                                  style: TextStyle(color: Colors.grey, fontSize: 13),
-                                ),
-                                Text(
-                                  authProvider.nomeUsuario,
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                const SizedBox(height: 2),
-                                Row(
-                                  children: [
-                                    const Icon(Icons.location_on, color: Color(0xFF38BDF8), size: 12),
-                                    const SizedBox(width: 4),
-                                    Text(
-                                      _localizacaoAtual,
-                                      style: const TextStyle(color: Colors.grey, fontSize: 12),
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                      ],
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.settings, color: Colors.white),
-                      onPressed: () => _mostrarMenuSettings(context),
-                    ),
+                    Icon(Icons.search, color: Color(0xFF7A7A7A), size: 20),
+                    SizedBox(width: 8),
+                    Text('Buscar', style: TextStyle(color: Color(0xFF7A7A7A), fontSize: 16)),
                   ],
                 ),
-                const SizedBox(height: 24),
-
-                // Card Principal de Saldo (Aparência idêntica ao Mockup)
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(20.0),
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [Color(0xFF0F1E36), Color(0xFF122C54)],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                    borderRadius: BorderRadius.circular(24),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.3),
-                        blurRadius: 10,
-                        offset: const Offset(0, 4),
+              ),
+              const SizedBox(height: 16),
+              
+              // Filtros (Pills horizontais)
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                physics: const BouncingScrollPhysics(),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      decoration: BoxDecoration(
+                        border: Border.all(color: const Color(0xFF333333)),
+                        borderRadius: BorderRadius.circular(20),
                       ),
-                    ],
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
+                      child: const Row(
                         children: [
-                          const Icon(Icons.account_balance, color: Color(0xFF38BDF8), size: 20),
-                          const SizedBox(width: 8),
-                          Text(
-                            'Saldo Disponível',
-                            style: TextStyle(
-                              color: Colors.grey[400],
-                              fontSize: 14,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
+                          Icon(Icons.tune, color: Colors.white, size: 16),
+                          SizedBox(width: 6),
+                          Text('Filtros', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
                         ],
                       ),
-                      const SizedBox(height: 12),
-                      Text(
-                        'R\$ ${transacaoProvider.saldoTotal.toStringAsFixed(2).replaceAll('.', ',')}',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 32,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      
-                      // Chip verde com ganhos totais
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                        decoration: BoxDecoration(
-                          color: const Color(0x2610B981), // Verde translúcido
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Icon(Icons.arrow_upward, color: Color(0xFF10B981), size: 12),
-                            const SizedBox(width: 4),
-                            Text(
-                              'R\$ ${transacaoProvider.totalReceitas.toStringAsFixed(2).replaceAll('.', ',')}',
-                              style: const TextStyle(
-                                color: Color(0xFF10B981),
-                                fontSize: 12,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 28),
-
-                // Seção Transações Recentes
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text(
-                      'Transações Recentes',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
                     ),
-                    TextButton(
-                      onPressed: _buscarDados,
-                      child: const Text(
-                        'Atualizar',
-                        style: TextStyle(color: Color(0xFF38BDF8), fontSize: 13),
-                      ),
-                    ),
+                    const SizedBox(width: 12),
+                    _buildFiltroPill('Entradas'),
+                    const SizedBox(width: 12),
+                    _buildFiltroPill('Saídas'),
+                    const SizedBox(width: 12),
+                    _buildFiltroPill('Categorias'),
                   ],
                 ),
-                const SizedBox(height: 8),
+              ),
+              const SizedBox(height: 24),
+              
+              // Resumo
+              Text('${recentes.length} resultados', style: const TextStyle(color: Color(0xFF7A7A7A))),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  _buildResumoMini('Total entradas', transacaoProvider.totalReceitas, Icons.call_received, const Color(0xFF10B981)),
+                  const SizedBox(width: 24),
+                  _buildResumoMini('Total saídas', transacaoProvider.totalDespesas, Icons.call_made, const Color(0xFFFF5C5C)),
+                ],
+              ),
+              const SizedBox(height: 24),
 
-                // Listagem de Transações
-                if (_estaCarregando)
-                  const Center(child: CircularProgressIndicator(color: Color(0xFF38BDF8)))
-                else if (recentes.isEmpty)
-                  Container(
-                    height: 150,
-                    width: double.infinity,
-                    alignment: Alignment.center,
-                    child: const Text(
-                      'Nenhuma transação cadastrada.',
-                      style: TextStyle(color: Colors.grey),
-                    ),
-                  )
-                else
-                  ListView.builder(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemCount: recentes.length,
-                    itemBuilder: (context, index) {
-                      final tx = recentes[index];
-                      final isReceita = tx.tipo == 'receita';
-
-                      return Card(
-                        color: const Color(0xFF1E293B),
-                        margin: const EdgeInsets.only(bottom: 12),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        child: ListTile(
-                          onTap: () {
-                            Navigator.of(context).pushNamed(
-                              Rotas.telaDetalhes,
-                              arguments: tx,
-                            ).then((_) => _buscarDados());
-                          },
-                          leading: _obterIconeCategoria(tx.categoria, tx.tipo),
-                          title: Text(
-                            tx.titulo,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 14,
-                              fontWeight: FontWeight.bold,
+              // Lista
+              Expanded(
+                child: _estaCarregando
+                  ? const Center(child: CircularProgressIndicator(color: Color(0xFFF97316)))
+                  : recentes.isEmpty
+                    ? const Center(child: Text('Nenhuma atividade.', style: TextStyle(color: Color(0xFF7A7A7A))))
+                    : ListView.builder(
+                        physics: const BouncingScrollPhysics(),
+                        itemCount: recentes.length,
+                        itemBuilder: (context, index) {
+                          final tx = recentes[index];
+                          final isReceita = tx.tipo == 'receita';
+                          
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 24.0),
+                            child: GestureDetector(
+                              onTap: () {
+                                Navigator.of(context).pushNamed(Rotas.telaDetalhes, arguments: tx).then((_) => _buscarDados());
+                              },
+                              child: Row(
+                                children: [
+                                  // Ícone com logo no badge
+                                  SizedBox(
+                                    width: 52,
+                                    height: 52,
+                                    child: Stack(
+                                      children: [
+                                        Container(
+                                          width: 48,
+                                          height: 48,
+                                          decoration: const BoxDecoration(
+                                            color: Color(0xFF171717),
+                                            shape: BoxShape.circle,
+                                          ),
+                                          child: _obterIconeCategoria(tx.categoria, tx.tipo),
+                                        ),
+                                        Positioned(
+                                          bottom: 0,
+                                          right: 0,
+                                          child: Container(
+                                            padding: const EdgeInsets.all(3),
+                                            decoration: BoxDecoration(
+                                              color: const Color(0xFF8B5CF6),
+                                              shape: BoxShape.circle,
+                                              border: Border.all(color: Colors.black, width: 2),
+                                            ),
+                                            child: const Icon(Icons.flash_on, color: Colors.white, size: 10),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  const SizedBox(width: 16),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(tx.titulo, style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+                                        const SizedBox(height: 4),
+                                        Text(tx.categoria, style: const TextStyle(color: Color(0xFF7A7A7A), fontSize: 14)),
+                                      ],
+                                    ),
+                                  ),
+                                  Text(
+                                    '${isReceita ? '' : '- '}R\$ ${tx.valor.toStringAsFixed(2).replaceAll('.', ',')}',
+                                    style: TextStyle(
+                                      color: isReceita ? Colors.white : const Color(0xFFFF5C5C),
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
-                          ),
-                          subtitle: Text(
-                            tx.categoria,
-                            style: TextStyle(
-                              color: Colors.grey[400],
-                              fontSize: 12,
-                            ),
-                          ),
-                          trailing: Text(
-                            '${isReceita ? '+' : '-'} R\$ ${tx.valor.toStringAsFixed(2).replaceAll('.', ',')}',
-                            style: TextStyle(
-                              color: isReceita ? const Color(0xFF10B981) : Colors.white,
-                              fontSize: 14,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-              ],
-            ),
+                          );
+                        },
+                      ),
+              ),
+              const SizedBox(height: 100), // Padding do dock inferior
+            ],
           ),
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          Navigator.of(context).pushNamed(Rotas.telaForm).then((_) => _buscarDados());
-        },
-        backgroundColor: const Color(0xFF38BDF8),
-        foregroundColor: Colors.white,
-        shape: const CircleBorder(),
-        child: const Icon(Icons.add, size: 28),
+    );
+  }
+
+  Widget _buildFiltroPill(String texto) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      decoration: BoxDecoration(
+        color: const Color(0xFF171717),
+        borderRadius: BorderRadius.circular(20),
       ),
-      bottomNavigationBar: BottomNavigationBar(
-        backgroundColor: const Color(0xFF1E293B),
-        selectedItemColor: const Color(0xFF38BDF8),
-        unselectedItemColor: Colors.grey,
-        currentIndex: 0, // Home ativo
-        onTap: (index) {
-          if (index == 1) {
-            Navigator.pushReplacementNamed(context, Rotas.telaDashboard);
-          } else if (index == 2) {
-            Navigator.pushReplacementNamed(context, Rotas.telaAlertas);
-          }
-        },
-        items: [
-          const BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-          const BottomNavigationBarItem(icon: Icon(Icons.bar_chart), label: 'Dashboard'),
-          BottomNavigationBarItem(
-            icon: transacaoProvider.alertasNaoLidos == 0 
-                ? const Icon(Icons.notifications) 
-                : Badge(
-                    label: Text('${transacaoProvider.alertasNaoLidos}'),
-                    child: const Icon(Icons.notifications),
-                  ),
-            label: 'Alertas',
-          ),
-        ],
-      ),
+      child: Text(texto, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w500)),
+    );
+  }
+
+  Widget _buildResumoMini(String titulo, double valor, IconData icone, Color cor) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(4),
+              decoration: const BoxDecoration(
+                color: Color(0xFF171717),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(icone, color: cor, size: 12),
+            ),
+            const SizedBox(width: 6),
+            Text(titulo, style: const TextStyle(color: Color(0xFF7A7A7A), fontSize: 12)),
+          ],
+        ),
+        const SizedBox(height: 4),
+        Text('R\$ ${valor.toStringAsFixed(2).replaceAll('.', ',')}', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+      ],
     );
   }
 }

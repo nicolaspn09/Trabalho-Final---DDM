@@ -4,4 +4,5 @@ class Rotas{
   static final telaInicial = "/";
   static final telaDashboard = "/tela-dashboard";
   static final telaAlertas = "/tela-alertas";
+  static final telaChat = "/tela-chat";
 }

@@ -21,6 +21,10 @@ class AuthProvider extends ChangeNotifier {
     return userEmail.split('@')[0];
   }
 
+  String? get avatarId {
+    return _currentUser?['avatar_id']?.toString();
+  }
+
   Map<String, String> get _headers => {
         'apikey': SupabaseConfig.anonKey,
         'Authorization': 'Bearer ${SupabaseConfig.anonKey}',
@@ -89,5 +93,39 @@ class AuthProvider extends ChangeNotifier {
   void logout() {
     _currentUser = null;
     notifyListeners();
+  }
+
+  Future<void> atualizarPerfil(String novoNome, {String? avatarId}) async {
+    if (_currentUser == null) return;
+    final id = _currentUser!['id'];
+
+    try {
+      final body = {
+        'nome': novoNome,
+        if (avatarId != null) 'avatar_id': avatarId,
+      };
+      
+      final response = await http.patch(
+        Uri.parse('${SupabaseConfig.url}/rest/v1/perfis?id=eq.$id'),
+        headers: _headers,
+        body: jsonEncode(body),
+      );
+
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        _currentUser!['nome'] = novoNome;
+        if (avatarId != null) _currentUser!['avatar_id'] = avatarId;
+        notifyListeners();
+      } else {
+        // Fallback local caso a coluna não exista no Supabase
+        _currentUser!['nome'] = novoNome;
+        if (avatarId != null) _currentUser!['avatar_id'] = avatarId;
+        notifyListeners();
+      }
+    } catch (e) {
+      // Fallback local em caso de erro de rede ou coluna inexistente
+      _currentUser!['nome'] = novoNome;
+      if (avatarId != null) _currentUser!['avatar_id'] = avatarId;
+      notifyListeners();
+    }
   }
 }

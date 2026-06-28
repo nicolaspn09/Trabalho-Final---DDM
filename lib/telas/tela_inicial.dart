@@ -1,5 +1,5 @@
 import '../providers/auth_provider.dart';
-import 'tela_lista.dart';
+import 'tela_principal.dart';
 import 'tela_login.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -11,7 +11,7 @@ class TelaInicial extends StatelessWidget {
   Widget build(BuildContext context) {
     AuthProvider authProvider = Provider.of<AuthProvider>(context);
     return authProvider.estaAutenticado
-        ? const TelaLista(titulo: 'Controle Financeiro')
+        ? const TelaPrincipal()
         : const TelaLogin();
   }
 }

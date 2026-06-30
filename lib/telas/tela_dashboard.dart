@@ -5,7 +5,6 @@ import '../providers/transacao_provider.dart';
 import '../providers/auth_provider.dart';
 import '../util/rotas.dart';
 import '../util/avatar_util.dart';
-import 'package:video_player/video_player.dart';
 import 'dart:ui';
 
 class TelaDashboard extends StatefulWidget {
@@ -15,8 +14,9 @@ class TelaDashboard extends StatefulWidget {
   State<TelaDashboard> createState() => _TelaDashboardState();
 }
 
-class _TelaDashboardState extends State<TelaDashboard> {
-  late VideoPlayerController _videoController;
+class _TelaDashboardState extends State<TelaDashboard> with SingleTickerProviderStateMixin {
+  late AnimationController _animationController;
+  late Animation<double> _animation;
 
   @override
   void initState() {
@@ -28,17 +28,14 @@ class _TelaDashboardState extends State<TelaDashboard> {
         Provider.of<TransacaoProvider>(context, listen: false).carregarTransacoes(userId);
       }
     });
-    _videoController = VideoPlayerController.asset('assets/bg_home.mp4')
-      ..initialize().then((_) {
-        _videoController.setLooping(true);
-        _videoController.play();
-        if (mounted) setState(() {});
-      });
+    
+    _animationController = AnimationController(vsync: this, duration: const Duration(seconds: 15))..repeat(reverse: true);
+    _animation = Tween<double>(begin: -0.1, end: 0.1).animate(CurvedAnimation(parent: _animationController, curve: Curves.easeInOutSine));
   }
 
   @override
   void dispose() {
-    _videoController.dispose();
+    _animationController.dispose();
     super.dispose();
   }
 
@@ -93,18 +90,28 @@ class _TelaDashboardState extends State<TelaDashboard> {
       backgroundColor: Colors.transparent, 
       body: Stack(
         children: [
-          // Vídeo de Fundo
-          if (_videoController.value.isInitialized)
-            Positioned.fill(
-              child: FittedBox(
-                fit: BoxFit.cover,
-                child: SizedBox(
-                  width: _videoController.value.size.width,
-                  height: _videoController.value.size.height,
-                  child: VideoPlayer(_videoController),
-                ),
-              ),
+          // Imagem Animada de Fundo
+          Positioned.fill(
+            child: AnimatedBuilder(
+              animation: _animation,
+              builder: (context, child) {
+                return FractionalTranslation(
+                  translation: Offset(_animation.value, _animation.value * 0.5),
+                  child: Transform.scale(
+                    scale: 1.25,
+                    child: Image.asset('assets/bg_home.png', fit: BoxFit.cover),
+                  ),
+                );
+              },
             ),
+          ),
+          
+          Positioned.fill(
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 40, sigmaY: 40),
+              child: Container(color: Colors.transparent),
+            ),
+          ),
           
           // Escurecimento em degradê (Video Overlay)
           Positioned.fill(

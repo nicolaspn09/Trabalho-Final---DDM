@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'dart:ui';
-import 'package:video_player/video_player.dart';
 import '../providers/auth_provider.dart';
 
 enum ModoTela { boasVindas, login, cadastro }
@@ -13,7 +12,7 @@ class TelaLogin extends StatefulWidget {
   State<TelaLogin> createState() => _TelaLoginState();
 }
 
-class _TelaLoginState extends State<TelaLogin> {
+class _TelaLoginState extends State<TelaLogin> with SingleTickerProviderStateMixin {
   ModoTela _modo = ModoTela.boasVindas;
   bool _isLoading = false;
   bool _ocultarSenha = true;
@@ -24,22 +23,20 @@ class _TelaLoginState extends State<TelaLogin> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
-  late VideoPlayerController _videoController;
+  
+  late AnimationController _animationController;
+  late Animation<double> _animation;
 
   @override
   void initState() {
     super.initState();
-    _videoController = VideoPlayerController.asset('assets/bg_login.mp4')
-      ..initialize().then((_) {
-        _videoController.setLooping(true);
-        _videoController.play();
-        setState(() {}); // Ensure UI updates once video is loaded
-      });
+    _animationController = AnimationController(vsync: this, duration: const Duration(seconds: 15))..repeat(reverse: true);
+    _animation = Tween<double>(begin: -0.1, end: 0.1).animate(CurvedAnimation(parent: _animationController, curve: Curves.easeInOutSine));
   }
 
   @override
   void dispose() {
-    _videoController.dispose();
+    _animationController.dispose();
     _nomeController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
@@ -189,25 +186,28 @@ class _TelaLoginState extends State<TelaLogin> {
       body: Stack(
         fit: StackFit.expand,
         children: [
-          // Fundo de Vídeo
-          if (_videoController.value.isInitialized)
-            FittedBox(
-              fit: BoxFit.cover,
-              child: SizedBox(
-                width: _videoController.value.size.width,
-                height: _videoController.value.size.height,
-                child: VideoPlayer(_videoController),
-              ),
-            )
-          else
-            Container(
-              decoration: const BoxDecoration(
-                image: DecorationImage(
-                  image: AssetImage('assets/bg_login.png'),
-                  fit: BoxFit.cover,
-                ),
-              ),
+          // Fundo Animado com Efeito Desfocado (Abstract Blur)
+          Positioned.fill(
+            child: AnimatedBuilder(
+              animation: _animation,
+              builder: (context, child) {
+                return FractionalTranslation(
+                  translation: Offset(_animation.value, _animation.value * 0.5),
+                  child: Transform.scale(
+                    scale: 1.25,
+                    child: Image.asset('assets/bg_login.png', fit: BoxFit.cover),
+                  ),
+                );
+              },
             ),
+          ),
+          
+          Positioned.fill(
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 40, sigmaY: 40),
+              child: Container(color: Colors.transparent),
+            ),
+          ),
           
           // Efeito de desfoque por cima do vídeo
           TweenAnimationBuilder<double>(
